@@ -75,7 +75,7 @@ Your server will start on [http://localhost:5000](http://localhost:5000)
 
 ---
 
-## 🌐 Frontend (Coming Soon)
+## 🌐 Frontend
 
 This backend is designed to be connected to a **React + TypeScript frontend** that will:
 
@@ -85,4 +85,28 @@ This backend is designed to be connected to a **React + TypeScript frontend** th
 - Possibly store chat history locally or remotely
 
 The frontend will make POST requests to this backend's `/api/chat` endpoint.
+
+## AI Integration Concepts: Function Calling & Real-Time Data(getStockPrice)
+
+- **Function Calling in LLMs**  
+  GPT models can call external functions dynamically based on user input, enabling real-time data fetching and task execution.
+
+- **Structured Function Schemas**  
+  Defining clear function names, parameters, and descriptions guides the AI to invoke the right function with valid inputs.
+
+- **Contextual Message Passing**  
+  Conversation history includes user messages, assistant replies, and function responses, allowing multi-turn reasoning and coherent interactions.
+
+- **Hybrid AI-System Architecture**  
+  AI handles language understanding and response generation; backend functions handle domain-specific logic and data retrieval.
+
+- **Error Handling & Fallback**  
+  Real-world AI apps must handle incomplete or invalid AI requests, backend errors, and rate limits gracefully.
+
+- **Latency Management**  
+  External function calls introduce latency; optimize with caching and efficient API usage to maintain smooth UX.
+
+- **Security Best Practices**  
+  Store sensitive API keys and credentials in environment variables; keep AI and backend components separate to protect secrets.
+
 
