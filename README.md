@@ -1,4 +1,4 @@
-# 🧠 AI Chatbot
+# 🧠 MoCha AI
 
 This is the **Node.js + Express backend** for an AI chatbot application powered by the OpenAI API. It exposes a `/api/chat` endpoint that receives a conversation (array of messages) and responds with a GPT-generated reply.
 
