@@ -174,7 +174,11 @@ const response = await openai.chat.completions.create({
 ---
 
 
-# Retreival Augmented Generation (RAG) [GPT +  external knowledge retreival system (private pfd, docucments)]
+# Retreival Augmented Generation (RAG)
+
+Retrieval-Augmented Generation (RAG) is a technique where an LLM like GPT is combined with an external knowledge retrieval system to answer questions based on custom data.
+
+ GPT + Search Engine over your own data = Accurate, grounded responses
 
         ┌────────────────────────────────────────────┐
         │           🔍 User asks a question          │
