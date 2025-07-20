@@ -109,4 +109,68 @@ The frontend will make POST requests to this backend's `/api/chat` endpoint.
 - **Security Best Practices**  
   Store sensitive API keys and credentials in environment variables; keep AI and backend components separate to protect secrets.
 
+# Prompt Engineering
+
+**Prompt Engineering** is the practice of designing and refining input prompts to large language models (LLMs) like GPT to elicit accurate, relevant, and well-structured responses. Effective prompt engineering is crucial for integrating AI models into applications reliably and efficiently.
+
+---
+
+## Key Concepts
+
+1. **Message Roles & Structure**  
+   - **System message:** Sets global assistant behavior, tone, and rules.  
+   - **User message:** Contains the user’s query or input.  
+   - **Assistant message:** The model’s reply.
+
+  <pre lang="markdown"><code>### Example: Message Roles in Chat API
+   const messages = [ 
+    { role: "system", content: "You are a helpful assistant." }, 
+   {
+     role: "user", content: "Explain prompt engineering." }, ];</code></pre>
+
+const response = await openai.chat.completions.create({
+  model: "gpt-4o-mini",
+  messages,
+});
+
+2. **Explicit Output Formatting**  
+   - Instruct the model to respond in strict formats (e.g., JSON, XML) for easy parsing.  
+   - Use schemas or templates and delimiters to ensure consistency.
+
+3. **Temperature Control**  
+   - Lower temperature (e.g., 0) for deterministic, factual responses.  
+   - Higher temperature (0.7–1.0) for creative or exploratory answers.
+
+4. **Chain-of-Thought Prompting (CoT)**  
+   - Ask the model to reason step-by-step before answering.  
+   - Improves accuracy on complex, multi-step problems.
+
+5. **Few-shot Learning**  
+   - Provide examples of desired input-output pairs in prompts to guide model behavior.
+
+6. **Function Calling Integration**  
+   - Define function schemas and let GPT autonomously decide when to call backend functions.  
+   - Parse and execute these calls, then feed results back to GPT for final responses.
+
+7. **Error Handling & Robustness**  
+   - Validate and sanitize user inputs before injecting into prompts.  
+   - Implement fallback logic for unexpected or malformed model outputs.
+
+8. **Dynamic Prompt Assembly**  
+   - Combine static instructions (system prompt) with dynamic context (user info, conversation history) efficiently.  
+   - Manage token limits by summarizing or truncating context as needed.
+
+---
+
+## Best Practices
+
+- Always use a **clear system prompt** to set assistant behavior and constraints.  
+- Enforce **structured output** for seamless frontend/backend integration.  
+- Use **Chain-of-Thought** prompts for improved reasoning tasks.  
+- Employ **official function calling APIs** for robust multi-tool orchestration.  
+- Balance prompt detail and length with **token usage** to optimize costs.  
+- Continuously **test and refine prompts** based on application needs.
+
+---
+
 
