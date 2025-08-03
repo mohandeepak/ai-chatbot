@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 import axios from "axios";
+import fs from "fs";
+import { addToStore, queryStore} from "./vectorStore.js";
 
 dotenv.config();
 
@@ -18,7 +20,37 @@ const openai = new OpenAI({
 
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
-// Function to get current stock price using Alpha Vantage
+// ========== Load AAPL 10-K into vector store (basic chunking) ==========
+const rawText = fs.readFileSync("../data/aapl_10k_2023.txt", "utf-8");
+const paragraphs = rawText
+  .split(/\n\s*\n/)
+  .map(p => p.trim())
+  .filter(p => p.length > 50);
+
+const chunks = [];
+let currentChunk = "";
+
+for (const para of paragraphs) {
+  if ((currentChunk + "\n" + para).length > 1000) {
+    chunks.push(currentChunk);
+    currentChunk = para;
+  } else {
+    currentChunk += "\n" + para;
+  }
+}
+if (currentChunk) chunks.push(currentChunk);
+
+async function loadChunks() {
+  console.log(`⏳ Loading ${chunks.length} chunks into vector store...`);
+  for (let i = 0; i < chunks.length; i++) {
+    await addToStore(`aapl-chunk-${i}`, chunks[i], { symbol: "AAPL", year: 2023 });
+  }
+  console.log("✅ Finished loading 10-K chunks.");
+}
+
+loadChunks(); 
+
+// ========== Existing Stock Price Function ==========
 async function getStockPrice(symbol) {
   try {
     const response = await axios.get(`https://www.alphavantage.co/query`, {
@@ -43,9 +75,8 @@ async function getStockPrice(symbol) {
   }
 }
 
-// Mock function to get latest company news (replace with real API if you want)
+// ========== Mock Company News ==========
 async function getCompanyNews(symbol) {
-  // Example: You could integrate a news API here
   return {
     symbol,
     headlines: [
@@ -56,9 +87,8 @@ async function getCompanyNews(symbol) {
   };
 }
 
-// Mock function to get historical stock data (replace with real API if needed)
+// ========== Mock Historical Data ==========
 async function getHistoricalData(symbol, period = "1mo") {
-  // Example: Return dummy data for now
   return {
     symbol,
     period,
@@ -66,12 +96,11 @@ async function getHistoricalData(symbol, period = "1mo") {
       { date: "2025-07-01", close: 150 },
       { date: "2025-07-02", close: 152 },
       { date: "2025-07-03", close: 148 },
-      // Add more data points or fetch real data from API
     ],
   };
 }
 
-// Define functions for OpenAI function calling
+// ========== OpenAI Functions ==========
 const functions = [
   {
     name: "getStockPrice",
@@ -118,11 +147,44 @@ const functions = [
   },
 ];
 
+// ========== Main Chat Endpoint with RAG Integration ==========
 app.post("/api/chat", async (req, res) => {
-  const { messages } = req.body;
+  const { messages, useRag } = req.body;
 
   try {
-    // First call: get GPT response + function call if needed
+    if (useRag) {
+      const userMessage = messages[messages.length - 1].content;
+
+      const topDocs = await queryStore(userMessage, 7);
+
+      const context = topDocs.map(doc => doc.text).join("\n---\n");
+
+      const prompt = `
+      You are a financial expert AI assistant.
+
+      ONLY answer based on the excerpts below from Apple's 2023 10-K filing.
+      If the answer is not found, reply exactly: "Information not found in the document."
+      
+      Context:
+      ${context}
+      
+      Question:
+      ${userMessage}
+      
+`;
+
+      const ragResponse = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      return res.json({
+        response: ragResponse.choices[0].message,
+        sources: topDocs.map(d => d.meta),
+      });
+    }
+
+    // ========== Regular GPT Chat + Function Calling ==========
     const completion = await openai.chat.completions.create({
       model: "gpt-4-0613",
       messages,
@@ -132,13 +194,11 @@ app.post("/api/chat", async (req, res) => {
     const responseMessage = completion.choices[0].message;
 
     if (responseMessage.function_call) {
-      // Parse function call and arguments
       const { name, arguments: argsString } = responseMessage.function_call;
       const args = JSON.parse(argsString);
 
       let functionResult;
 
-      // Call the matching backend function
       switch (name) {
         case "getStockPrice":
           functionResult = await getStockPrice(args.symbol);
@@ -153,7 +213,6 @@ app.post("/api/chat", async (req, res) => {
           functionResult = { error: "Function not implemented" };
       }
 
-      // Second call: send function result back for natural language reply
       const secondCompletion = await openai.chat.completions.create({
         model: "gpt-4-0613",
         messages: [
@@ -161,7 +220,7 @@ app.post("/api/chat", async (req, res) => {
           responseMessage,
           {
             role: "function",
-            name: name, // must exactly match the function_call name
+            name: name,
             content: JSON.stringify(functionResult),
           },
         ],
@@ -170,7 +229,6 @@ app.post("/api/chat", async (req, res) => {
       return res.json({ response: secondCompletion.choices[0].message });
     }
 
-    // No function call needed, just return GPT response
     res.json({ response: responseMessage });
   } catch (err) {
     console.error("OpenAI error:", err);
@@ -178,4 +236,4 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`Server listening on port ${port}`));
+app.listen(port, () => console.log(`🚀 Server listening on port ${port}`));
