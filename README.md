@@ -1,4 +1,4 @@
-# 🧠 MoCha AI
+# 🧠 FinSight AI
 
 This is the **Node.js + Express backend** for an AI chatbot application powered by the OpenAI API. It exposes a `/api/chat` endpoint that receives a conversation (array of messages) and responds with a GPT-generated reply.
 
@@ -217,3 +217,29 @@ Retrieval-Augmented Generation (RAG) is a technique where an LLM like GPT is com
          └─────────────────────────────────────────────┘
 
 
+# 🧠 AI-Powered Stock Insights with RAG
+
+This project enables users to ask natural language questions about stock-related financial documents (like Apple’s 10-K) and receive fact-grounded answers using **Retrieval-Augmented Generation (RAG)** powered by OpenAI.
+
+## 🚀 Features
+
+- **Chat-based Financial Q&A** – Ask questions like _“What was Apple’s revenue in 2023?”_
+- **RAG-Enhanced Answers** – Combines GPT with document retrieval to provide accurate, source-backed responses.
+- **Embedding Search** – Uses OpenAI embeddings and cosine similarity to retrieve relevant chunks.
+- **Metadata Support** – Each chunk is tagged (e.g., `symbol: AAPL`, `year: 2023`) to enable better filtering.
+- **Toggleable RAG Mode** – Switch between GPT-only and RAG-enhanced responses from the frontend.
+- **Clear Source Display** – View chunks used to generate the answer.
+
+## 🧩 How It Works
+
+1. **Document Loading**  
+   Financial filings (like `aapl_10k_2023.txt`) are read and split into meaningful paragraph chunks.
+
+2. **Chunk Embedding**  
+   Each chunk is embedded using OpenAI’s embedding API and stored in memory with its metadata.
+
+3. **User Query Flow**  
+   When the user submits a question:
+   - The query is embedded.
+   - Top-k most similar chunks are retrieved from memory.
+   - These are passed along with the query to GPT for answer generation.
